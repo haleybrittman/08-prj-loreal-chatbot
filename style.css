@@ -18,6 +18,14 @@ body {
   max-width: 900px;
 }
 
+/* Branding logo centered above the page content */
+.brand-logo {
+  display: block;
+  margin: 18px auto;
+  max-width: 260px;
+  height: auto;
+}
+
 /* header */
 .site-header {
   text-align: center;
@@ -53,10 +61,13 @@ body {
   display: flex; /* place tag and content on same row */
   gap: 8px;
   align-items: flex-start;
+  width: 100%;
 }
 
 .msg.user {
   color: #000;
+  /* place user tag and bubble on the right */
+  flex-direction: row-reverse;
 }
 .msg.ai {
   color: #666666;
@@ -76,8 +87,43 @@ body {
 /* message content container */
 .msg-content {
   display: block;
-  max-width: 100%;
-  flex: 1 1 auto;
+  /* allow bubble to size to its content but wrap long lines; don't force full-width */
+  flex: 0 1 auto;
+  max-width: 72%;
+  min-width: 48px;
+  word-break: break-word;
+}
+
+/* Bubble styling for messages */
+.msg-content {
+  padding: 10px 14px;
+  border-radius: 14px;
+  line-height: 1.4;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+
+/* Assistant (L'Oréal) bubble */
+.msg.ai .msg-content,
+.msg.assistant .msg-content {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  color: #222;
+}
+
+/* User bubble */
+.msg.user .msg-content {
+  /* Use same neutral bubble as assistant for consistency */
+  background: #ffffff;
+  border: 1px solid #ececec;
+  color: #222;
+}
+
+/* Error state bubble */
+.msg-content.error,
+.msg .error .msg-content {
+  background: #fff4f2;
+  color: #8a1f11;
+  border: 1px solid #f5c6c2;
 }
 
 .msg.assistant .msg-tag,
@@ -99,9 +145,23 @@ body {
 .chat-form input {
   flex: 1;
   min-width: 0; /* allow input to shrink/grow inside flex container without overflowing */
-  padding: 12px;
-  border: 1px solid #ccc;
+  padding: 12px 14px;
   font-size: 18px;
+  /* Use Helvetica Now Display W05 Reg for the input if available */
+  font-family: "Helvetica Now Display W05 Reg", Helvetica, Arial, sans-serif;
+  /* Gradient border using L'Oréal color #E3A535 - interior stays white */
+  border-radius: 28px;
+  border: 2px solid transparent;
+  background-image: linear-gradient(#fff, #fff), linear-gradient(90deg, #E3A535 0%, #F7DFA7 50%, #E3A535 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.chat-form input:focus {
+  outline: none; /* keep custom focus style */
+  box-shadow: 0 0 0 4px rgba(227,165,53,0.12);
+  transform: translateY(-1px);
 }
 
 .chat-form input:focus {
