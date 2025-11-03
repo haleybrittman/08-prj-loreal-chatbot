@@ -18,6 +18,45 @@ const messages = [
   { role: "system", content: systemMessage }
 ];
 
+// --- Conversation persistence (localStorage) ---
+const MESSAGES_KEY = "ba_messages_v1"; // versioned key in case we change format later
+
+function saveConversation() {
+  try {
+    // save all messages except the system instruction (index 0)
+    const toSave = messages.slice(1);
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(toSave));
+  } catch (e) {
+    console.warn("Could not save conversation to localStorage", e);
+  }
+}
+
+function loadConversation() {
+  try {
+    const raw = localStorage.getItem(MESSAGES_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!Array.isArray(saved)) return;
+    // append saved messages to the in-memory messages array
+    for (const m of saved) {
+      // basic validation
+      if (m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string") {
+        messages.push(m);
+      }
+    }
+    // render them in the chat window
+    chatWindow.textContent = ""; // clear initial text
+    for (const m of messages.slice(1)) {
+      appendMessage(m.role === "assistant" ? "assistant" : "user", m.content);
+    }
+  } catch (e) {
+    console.warn("Could not load conversation from localStorage", e);
+  }
+}
+
+// Load any saved conversation on start
+loadConversation();
+
 // Helper to append messages to the chat window. Simple DOM bubbles.
 function appendMessage(role, text, isTemporary = false) {
   // Create message wrapper
@@ -65,6 +104,8 @@ chatForm.addEventListener("submit", (e) => {
   // Append user message to local conversation and UI
   const userMsg = { role: "user", content: userText };
   messages.push(userMsg);
+  // persist conversation after adding user message
+  saveConversation();
   appendMessage("user", userText);
 
     // Add a temporary assistant message that we'll replace when the reply arrives
@@ -104,6 +145,8 @@ chatForm.addEventListener("submit", (e) => {
       delete tempEl.dataset.temp;
       const assistantMsg = { role: "assistant", content: assistantText };
       messages.push(assistantMsg);
+      // persist conversation after adding assistant reply
+      saveConversation();
     } catch (err) {
       // Log full error for debugging (don't expose details to the user)
       console.error("Error sending to worker:", err);
@@ -118,8 +161,14 @@ chatForm.addEventListener("submit", (e) => {
           // Add a styling hook in case you want to style errors differently
           tempEl.classList.add("error");
           delete tempEl.dataset.temp;
+          // add the assistant error message to conversation history and persist
+          const assistantMsg = { role: "assistant", content: friendly };
+          messages.push(assistantMsg);
+          saveConversation();
         } else {
           appendMessage("assistant", friendly);
+          messages.push({ role: "assistant", content: friendly });
+          saveConversation();
         }
       } catch (uiErr) {
         // If updating the UI fails for any reason, log and silently fallback

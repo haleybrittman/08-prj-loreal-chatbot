@@ -21,7 +21,8 @@ body {
 /* Branding logo centered above the page content */
 .brand-logo {
   display: block;
-  margin: 18px auto;
+  /* bring the logo closer to the title by reducing bottom margin */
+  margin: 8px auto 6px;
   max-width: 260px;
   height: auto;
 }
@@ -29,7 +30,8 @@ body {
 /* header */
 .site-header {
   text-align: center;
-  padding-top: 50px;
+  /* reduce top padding so the title sits closer to the brand logo */
+  padding-top: 12px;
 }
 
 .site-title {
