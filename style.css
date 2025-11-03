@@ -48,16 +48,45 @@ body {
 
 /* messages */
 .msg {
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   line-height: 1.5;
+  display: flex; /* place tag and content on same row */
+  gap: 8px;
+  align-items: flex-start;
 }
 
 .msg.user {
   color: #000;
 }
-
 .msg.ai {
   color: #666666;
+}
+
+/* speaker tag shown above or beside each message */
+.msg-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 18px; /* match chat window and input size */
+  color: #666;
+  font-weight: 600;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* message content container */
+.msg-content {
+  display: block;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+.msg.assistant .msg-tag,
+.msg.ai .msg-tag {
+  color: #555;
+}
+
+.msg.user .msg-tag {
+  color: #000;
 }
 
 /* input row */
@@ -65,10 +94,11 @@ body {
   display: flex;
   gap: 12px;
   margin-top: 16px;
+  align-items: center; /* ensure input and button align vertically */
 }
-
 .chat-form input {
   flex: 1;
+  min-width: 0; /* allow input to shrink/grow inside flex container without overflowing */
   padding: 12px;
   border: 1px solid #ccc;
   font-size: 18px;
@@ -95,7 +125,7 @@ body {
 }
 
 .chat-form button .material-icons {
-  font-size: 24px;
+  font-size: 20px; /* slightly smaller so it fits comfortably inside the button */
 }
 
 .chat-form button:hover {

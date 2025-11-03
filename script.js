@@ -20,14 +20,35 @@ const messages = [
 
 // Helper to append messages to the chat window. Simple DOM bubbles.
 function appendMessage(role, text, isTemporary = false) {
+  // Create message wrapper
   const el = document.createElement("div");
-  el.className = `msg ${role}`; // you can style .msg.user and .msg.assistant in CSS
-  el.textContent = text;
-  if (isTemporary) el.dataset.temp = "true";
+  // Map role names to CSS classes: keep `.user` and `.ai` (existing CSS uses .msg.ai)
+  const roleClass = role === "assistant" || role === "ai" ? "ai" : role;
+  el.className = `msg ${roleClass}`;
+
+  // Tag (e.g., "You" or "L'Oréal") to indicate speaker
+  const tag = document.createElement("span");
+  tag.className = "msg-tag";
+  tag.textContent = roleClass === "user" ? "You" : "L'Oréal";
+
+  // Message content container (preserve whitespace)
+  const content = document.createElement("div");
+  content.className = "msg-content";
+  content.textContent = text;
+  content.style.whiteSpace = "pre-wrap"; // respect newlines and wrapping
+
+  if (isTemporary) content.dataset.temp = "true";
+
+  // Compose and append
+  el.appendChild(tag);
+  el.appendChild(content);
   chatWindow.appendChild(el);
+
   // Keep chat window scrolled to bottom
   chatWindow.scrollTop = chatWindow.scrollHeight;
-  return el;
+
+  // Return the content element (useful for updating temporary text)
+  return content;
 }
 
 /* Handle form submit */
