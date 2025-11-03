@@ -5,8 +5,30 @@ const chatWindow = document.getElementById("chatWindow");
 
 const workerURL = "https://gca-worker.hbrittman.workers.dev/"; // Replace with your Cloudflare Worker URL
 
+// System message to guide the assistant's behavior. Edit this to change
+// the assistant's persona or instructions.
+const systemMessage = "You are an expert on L'Oréal products and a friendly beauty consultant. Provide accurate, concise product recommendations from L'Oréal's range, ask clarifying questions when needed (skin/hair type, concerns, budget), and include short usage tips. Avoid making medical claims and suggest a professional if the issue appears medical.";
+
 // Set initial message
 chatWindow.textContent = "👋 Hello! How can I help you today?";
+
+// Conversation history that will be sent to the worker on every request.
+// It starts with the system message and is appended with user & assistant turns.
+const messages = [
+  { role: "system", content: systemMessage }
+];
+
+// Helper to append messages to the chat window. Simple DOM bubbles.
+function appendMessage(role, text, isTemporary = false) {
+  const el = document.createElement("div");
+  el.className = `msg ${role}`; // you can style .msg.user and .msg.assistant in CSS
+  el.textContent = text;
+  if (isTemporary) el.dataset.temp = "true";
+  chatWindow.appendChild(el);
+  // Keep chat window scrolled to bottom
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  return el;
+}
 
 /* Handle form submit */
 chatForm.addEventListener("submit", (e) => {
@@ -16,15 +38,20 @@ chatForm.addEventListener("submit", (e) => {
   const userText = userInput.value.trim();
   if (!userText) return;
 
-  // Show a simple status in the chat window while we call the worker
-  chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
+  // Immediately clear the input so the user can type again
+  userInput.value = "";
 
-  // Build the request body: Cloudflare Worker expects a `messages` array
-  const body = {
-    messages: [
-      { role: "user", content: userText }
-    ]
-  };
+  // Append user message to local conversation and UI
+  const userMsg = { role: "user", content: userText };
+  messages.push(userMsg);
+  appendMessage("user", userText);
+
+    // Add a temporary assistant message that we'll replace when the reply arrives
+    // Product-friendly thinking text shown while awaiting the worker reply
+    const tempEl = appendMessage("assistant", "Finding the best L'Oréal recommendations...", true);
+
+  // Build the request body using the full conversation history
+  const body = { messages: messages };
 
   // Use async IIFE so we can use await inside this event handler
   (async () => {
@@ -46,20 +73,39 @@ chatForm.addEventListener("submit", (e) => {
       const data = await res.json();
 
       // The worker proxies OpenAI and returns the choices array.
-      // Students: the assistant text is at data.choices[0].message.content
+      // The assistant text is at data.choices[0].message.content
       const assistantText = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
         ? data.choices[0].message.content
         : JSON.stringify(data);
 
-      // Display the assistant reply
-      chatWindow.textContent = assistantText;
+      // Replace the temporary assistant message text and add to history
+      tempEl.textContent = assistantText;
+      delete tempEl.dataset.temp;
+      const assistantMsg = { role: "assistant", content: assistantText };
+      messages.push(assistantMsg);
     } catch (err) {
-      // Log for debugging and show a friendly message
+      // Log full error for debugging (don't expose details to the user)
       console.error("Error sending to worker:", err);
-      chatWindow.textContent = `Error: ${err.message}`;
+
+      // Friendly message shown to the user
+      const friendly = "Sorry — I couldn't get recommendations right now. Please try again shortly.";
+
+      // Try to update the temporary element if it exists; otherwise append a new assistant message
+      try {
+        if (typeof tempEl !== "undefined" && tempEl) {
+          tempEl.textContent = friendly;
+          // Add a styling hook in case you want to style errors differently
+          tempEl.classList.add("error");
+          delete tempEl.dataset.temp;
+        } else {
+          appendMessage("assistant", friendly);
+        }
+      } catch (uiErr) {
+        // If updating the UI fails for any reason, log and silently fallback
+        console.error("Error updating UI after worker failure:", uiErr);
+      }
     } finally {
-      // Always clear the input so the user can type another message
-      userInput.value = "";
+      // nothing to do here; input was cleared immediately on submit
     }
   })();
 });
