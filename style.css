@@ -33,9 +33,15 @@ body {
 }
 
 .site-title {
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 28px;
+  font-weight: 700;
   margin-bottom: 10px;
+  /* Gradient text using L'Oréal gold (#E3A535) to black */
+  background-image: linear-gradient(90deg, #E3A535 0%, #000000 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent; /* for Safari */
 }
 
 /* chat window */
